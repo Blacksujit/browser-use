@@ -345,9 +345,10 @@ class Registry(Generic[Context]):
 
 		action = self.registry.actions[action_name]
 		try:
-			# Create the validated Pydantic model
+			# Create the validated Pydantic model. Accept both field names and aliases: the LLM fills
+			# the aliased JSON schema, while Tools.act() passes model_dump() output keyed by field name.
 			try:
-				validated_params = action.param_model(**params)
+				validated_params = action.param_model.model_validate(params, by_alias=True, by_name=True)
 			except Exception as e:
 				raise ValueError(f'Invalid parameters {params} for action {action_name}: {type(e)}: {e}') from e
 
@@ -513,7 +514,8 @@ class Registry(Generic[Context]):
 		if all_missing_placeholders:
 			logger.warning(f'Missing or empty keys in sensitive_data dictionary: {", ".join(all_missing_placeholders)}')
 
-		return type(params).model_validate(processed_params)
+		# processed_params is keyed by field name (model_dump() default), so validate by name as well
+		return type(params).model_validate(processed_params, by_alias=True, by_name=True)
 
 	# @time_execution_sync('--create_action_model')
 	def create_action_model(self, include_actions: list[str] | None = None, page_url: str | None = None) -> type[ActionModel]:
