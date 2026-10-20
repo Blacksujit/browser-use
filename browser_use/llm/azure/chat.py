@@ -1,3 +1,4 @@
+import json
 import os
 from dataclasses import dataclass
 from typing import Any, TypeVar, overload
@@ -215,7 +216,7 @@ class ChatAzureOpenAI(ChatOpenAILike):
 
 				# Add JSON schema to system prompt if requested
 				if self.add_schema_to_system_prompt and input_messages and input_messages[0].get('role') == 'system':
-					schema_text = f'\n<json_schema>\n{json_schema}\n</json_schema>'
+					schema_text = f'\n<json_schema>\n{json.dumps(json_schema, indent=2)}\n</json_schema>'
 					content = input_messages[0].get('content', '')
 					if isinstance(content, str):
 						input_messages[0]['content'] = content + schema_text
